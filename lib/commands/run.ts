@@ -5,6 +5,7 @@ export class RunCommandBase {
 
 	public executeCore(args: string[], buildConfig?: IBuildConfig): IFuture<void> {
 		if (this.$options.watch) {
+			this.$platformService.runPlatform(args[0], buildConfig, true).wait();
 			return this.$usbLiveSyncService.liveSync(args[0]);
 		} else {
 			return this.$platformService.runPlatform(args[0], buildConfig);

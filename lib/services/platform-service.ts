@@ -437,13 +437,13 @@ export class PlatformService implements IPlatformService {
 		}).future<void>()();
 	}
 
-	public runPlatform(platform: string, buildConfig?: IBuildConfig): IFuture<void> {
+	public runPlatform(platform: string, buildConfig?: IBuildConfig, doNotStart?: boolean): IFuture<void> {
 		platform = platform.toLowerCase();
 		if (this.$options.emulator) {
-			return this.deployOnEmulator(platform, buildConfig);
+			return this.deployOnEmulator(platform, buildConfig, doNotStart);
 		}
 
-		return this.deployOnDevice(platform, buildConfig);
+		return this.deployOnDevice(platform, buildConfig, doNotStart);
 	}
 
 	public installOnDevice(platform: string, buildConfig?: IBuildConfig): IFuture<void> {
@@ -491,9 +491,12 @@ export class PlatformService implements IPlatformService {
 		return device.deviceInfo.platform.toLowerCase() + device.deviceInfo.type;
 	}
 
-	public deployOnDevice(platform: string, buildConfig?: IBuildConfig): IFuture<void> {
+	public deployOnDevice(platform: string, buildConfig?: IBuildConfig, doNotStart?: boolean): IFuture<void> {
 		return (() => {
 			this.installOnDevice(platform, buildConfig).wait();
+			if (doNotStart) {
+				return;
+			}
 			this.startOnDevice(platform).wait();
 		}).future<void>()();
 	}
@@ -528,7 +531,7 @@ export class PlatformService implements IPlatformService {
 		return canExecute;
 	}
 
-	public deployOnEmulator(platform: string, buildConfig?: IBuildConfig): IFuture<void> {
+	public deployOnEmulator(platform: string, buildConfig?: IBuildConfig, doNotStart?: boolean): IFuture<void> {
 		platform = platform.toLowerCase();
 		if (this.$options.avd) {
 			this.$logger.warn(`Option --avd is no longer supported. Please use --device instead!`);
@@ -571,6 +574,9 @@ export class PlatformService implements IPlatformService {
 
 						logFilePath = path.join(platformData.projectRoot, this.$projectData.projectName, "emulator.log");
 
+						if (doNotStart) {
+							return;
+						}
 						emulatorServices.runApplicationOnEmulator(packageFile, { stderrFilePath: logFilePath, stdoutFilePath: logFilePath, appId: this.$projectData.projectId }).wait();
 					} else {
 						this.$errors.fail(`Cannot find device with name: ${this.$options.device || this.$options.avd}.`);
